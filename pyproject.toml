@@ -11,6 +11,7 @@ dependencies = [
     "fastapi[standard] (>=0.119.1,<0.120.0)",
     "alembic (>=1.17.1,<2.0.0)",
     "sqlalchemy (>=2.0.44,<3.0.0)",
+    "pydantic-settings (>=2.11.0,<3.0.0)",
 ]
 
 [tool.poetry]
@@ -29,7 +30,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = '.'
+pythonpath = ['src']
 addopts = '-p no:warnings'
 
 [tool.ruff]
@@ -47,7 +48,7 @@ quote-style = 'single'
 [tool.taskipy.tasks]
 run = 'fastapi dev src/fast_zero/app.py'
 pre_test = 'test lint'
-test = 'pytest --cov=src/fast_zero -vv'
+test = 'pytest --cov=fast_zero -vv'
 post_test = 'coverage html'
 lint = 'ruff check . ; ruff check . --diff'
-format = 'ruff check . --fix ; ruff format .'
+format = 'ruff check . --fix ; ruff format .']
