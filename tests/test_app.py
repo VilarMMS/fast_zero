@@ -43,11 +43,7 @@ def test_read_users(client):
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'users': [
-            {
-                'username': 'testusername',
-                'email': 'test@test.com',
-                'id': 1
-            }
+            {'username': 'testusername', 'email': 'test@test.com', 'id': 1}
         ]
     }
 
@@ -98,8 +94,9 @@ def test_delete_user(client):
 
     # Assert
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'message':
-                               'User test_to_delete deleted successfully'}
+    assert response.json() == {
+        'message': 'User test_to_delete deleted successfully'
+    }
 
 
 def test_read_user_by_id(client):
@@ -109,7 +106,7 @@ def test_read_user_by_id(client):
         json={
             'username': 'testuser',
             'email': 'test@example.com',
-            'password': 'password123'
+            'password': 'password123',
         },
     )
 
