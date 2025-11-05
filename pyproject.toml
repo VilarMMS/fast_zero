@@ -12,10 +12,16 @@ dependencies = [
     "alembic (>=1.17.1,<2.0.0)",
     "sqlalchemy (>=2.0.44,<3.0.0)",
     "pydantic-settings (>=2.11.0,<3.0.0)",
+    "taskipy (>=1.14.1,<2.0.0)",
 ]
 
 [tool.poetry]
 packages = [{include = "fast_zero", from = "src"}]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pytest-cov = "^7.0.0"
+ruff = "^0.14.3"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

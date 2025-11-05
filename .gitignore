@@ -179,3 +179,5 @@ database.db
 
 # Generated using ignr.py - github.com/Antrikshy/ignr.py
 
+# Log files
+*logs*

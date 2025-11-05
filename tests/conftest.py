@@ -8,24 +8,27 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from fast_zero.app import app
-from src.fast_zero.database import get_session
-from src.fast_zero.db_models import User, table_registry
+from fast_zero.database import get_session
+from fast_zero.db_models import User, table_registry
 
 
 @pytest.fixture
 def client(session: Session):
     """
-    A fixture that creates a TestClient for the app overring
+    A fixture that creates a TestClient for the app overriding
     real data with test data.
     """
 
     def get_session_override():
-        return session
+        print(
+            f'get_session_override called, yielding session id: {id(session)}'
+        )
+        yield session
 
     # Setup: Create a new TestClient instance
     with TestClient(app) as client:
         app.dependency_overrides[get_session] = get_session_override
-        yield client  # This is where the test runs
+        yield client
 
     # Teardown: Clear the database after the test is complete
     app.dependency_overrides.clear()
@@ -54,9 +57,15 @@ def session():
     )
     table_registry.metadata.create_all(engine)
 
-    with Session(engine) as session:
-        yield session
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection)
 
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
     table_registry.metadata.drop_all(engine)
 
 

@@ -25,7 +25,7 @@ def read_root():
 def read_users(
     session: Session = Depends(get_session), limit: int = 10, offset: int = 0
 ):
-    users = session.scalars(select(User).limit(limit).offset(offset))
+    users = session.scalars(select(User).limit(limit).offset(offset)).all()
     return {'users': users}
 
 
@@ -85,16 +85,15 @@ def update_user(
 
 
 @app.delete('/users/{user_id}', response_model=Message)
-def delete_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
-):
+def delete_user(user_id: int, session: Session = Depends(get_session)):
     # Verify if user exists
     db_user = session.scalar(select(User).where(User.id == user_id))
 
     if db_user is None:
         raise_user_not_found()
-    else:
-        session.delete(db_user)
-        session.commit()
 
-        return {'message': 'user deleted successfully'}
+    username = db_user.username
+    session.delete(db_user)
+    session.commit()
+
+    return {'message': f'User {username} deleted successfully'}
