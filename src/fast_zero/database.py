@@ -25,3 +25,25 @@ def raise_conflict():
         status_code=HTTPStatus.CONFLICT,
         detail='Username or email already registered',
     )
+
+
+def raise_unauthorized():
+    raise HTTPException(
+        status_code=HTTPStatus.UNAUTHORIZED,
+        detail='Incorrect username or password',
+    )
+
+
+def raise_credentials_expection():
+    raise HTTPException(
+        status_code=HTTPStatus.UNAUTHORIZED,
+        detail='Could not validate credentials',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+
+
+def raise_forbidden():
+    raise HTTPException(
+        status_code=HTTPStatus.FORBIDDEN,
+        detail='Not enough permission',
+    )

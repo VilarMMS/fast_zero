@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from fast_zero.app import app
 from fast_zero.database import get_session
 from fast_zero.db_models import User, table_registry
+from fast_zero.security import get_password_harsh
 
 
 @pytest.fixture
@@ -36,14 +37,18 @@ def client(session: Session):
 
 @pytest.fixture
 def user(session: Session):
+    clean_password = 'any_password'
+
     user = User(
         username='test_user',
         email='test_email@test.com',
-        password='any_password',
+        password=get_password_harsh(clean_password),
     )
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    user.clean_password = clean_password
 
     return user
 
@@ -88,3 +93,15 @@ def _mock_db_time(model=User, time=datetime.now()):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        'token',
+        data={
+            'username': user.email,
+            'password': user.clean_password,
+        },
+    )
+    return response.json()['access_token']
