@@ -10,13 +10,11 @@ from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session, raise_credentials_expection
 from fast_zero.db_models import User
+from fast_zero.settings import Settings
 
-SECRET_KEY = 'your-secret-key'
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-ouath2_scheme = OAuth2PasswordBearer(tokenUrl='token')
-
+ouath2_scheme = OAuth2PasswordBearer(tokenUrl='auth/token')
 pwd_context = PasswordHash.recommended()
+settings = Settings()
 
 
 def get_password_harsh(password: str) -> str:
@@ -33,11 +31,15 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     datetime_now = datetime.now(tz=ZoneInfo('UTC'))
-    expire = datetime_now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime_now + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
 
     to_encode.update({'exp': expire})
 
-    encoeded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoeded_jwt = encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
 
     return encoeded_jwt
 
@@ -47,7 +49,9 @@ def get_current_user(
     token: str = Depends(ouath2_scheme),
 ):
     try:
-        payload = decode(token, SECRET_KEY, algorithms=ALGORITHM)
+        payload = decode(
+            token, settings.SECRET_KEY, algorithms=settings.ALGORITHM
+        )
         subject_email = payload.get('sub')
         if subject_email is None:
             raise_credentials_expection()
