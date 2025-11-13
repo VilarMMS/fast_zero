@@ -1,7 +1,9 @@
 from dataclasses import asdict
 from http import HTTPStatus
 
+import pytest
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.db_models import User
 from fast_zero.schemas import UserPublic
@@ -17,7 +19,8 @@ def test_read_users(user, client, token):
     assert response.json() == {'users': [user_schema]}
 
 
-def test_create_user(session, mock_db_time):
+@pytest.mark.asyncio
+async def test_create_user(session: AsyncSession, mock_db_time):
     # Data do assert
     username = 'test'
     email = 'email@gmail.com'
@@ -26,9 +29,11 @@ def test_create_user(session, mock_db_time):
     with mock_db_time() as time:
         new_user = User(username=username, email=email, password=password)
         session.add(new_user)
-        session.commit()
+        await session.commit()
 
-        user = session.scalar(select(User).where(User.username == 'test'))
+        user = await session.scalar(
+            select(User).where(User.username == 'test')
+        )
 
         assert asdict(user) == {
             'id': 1,

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.database import (
     get_session,
@@ -18,14 +18,16 @@ from fast_zero.security import (
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
-UserSession = Annotated[Session, Depends(get_session)]
+UserSession = Annotated[AsyncSession, Depends(get_session)]
 OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 
 # Generate token for login
 @router.post('/token', response_model=Token)
-def login_to_access_token(form_data: OAuth2Form, session: UserSession):
-    user = session.scalar(select(User).where(User.email == form_data.username))
+async def login_to_access_token(form_data: OAuth2Form, session: UserSession):
+    user = await session.scalar(
+        select(User).where(User.email == form_data.username)
+    )
 
     if user is None:
         raise_unauthorized()

@@ -2,9 +2,10 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from fast_zero.app import app
@@ -14,7 +15,7 @@ from fast_zero.security import Settings, get_password_harsh
 
 
 @pytest.fixture
-def client(session: Session):
+def client(session: AsyncSession):
     """
     A fixture that creates a TestClient for the app overriding
     real data with test data.
@@ -35,43 +36,37 @@ def client(session: Session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def user(session: Session):
+@pytest_asyncio.fixture
+async def user(session: AsyncSession):
     clean_password = 'any_password'
-
     user = User(
         username='test_user',
         email='test_email@test.com',
         password=get_password_harsh(clean_password),
     )
     session.add(user)
-    session.commit()
-    session.refresh(user)
-
+    await session.commit()
+    await session.refresh(user)
     user.clean_password = clean_password
-
     return user
 
 
-@pytest.fixture
-def session():
-    engine = create_engine(
-        'sqlite:///:memory:',
+@pytest_asyncio.fixture
+async def session():
+    engine = create_async_engine(
+        'sqlite+aiosqlite:///:memory:',
         connect_args={'check_same_thread': False},
         poolclass=StaticPool,
     )
-    table_registry.metadata.create_all(engine)
 
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = Session(bind=connection)
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.create_all)
 
-    yield session
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        yield session
 
-    session.close()
-    transaction.rollback()
-    connection.close()
-    table_registry.metadata.drop_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.drop_all)
 
 
 @contextmanager
