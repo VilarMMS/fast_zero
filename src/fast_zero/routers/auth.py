@@ -14,6 +14,7 @@ from fast_zero.schemas import Token
 from fast_zero.security import (
     create_access_token,
     verify_password,
+    get_current_user
 )
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -38,3 +39,13 @@ async def login_to_access_token(form_data: OAuth2Form, session: UserSession):
     access_token = create_access_token({'sub': user.email})
 
     return {'access_token': access_token, 'token_type': 'Bearer'}
+
+
+# Refresh token
+@router.post('/refresh_token', response_model=Token)
+async def refresh_access_token(
+    user: Annotated[User, Depends(get_current_user)]
+    ):
+    new_access_token = create_access_token(data={'sub': user.email})
+
+    return {'access_token': new_access_token, 'token_type': 'Bearer'}

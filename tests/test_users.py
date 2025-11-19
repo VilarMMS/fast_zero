@@ -66,6 +66,21 @@ def test_update_user(client, user, token):
     }
 
 
+def test_update_user_with_wrong_id(client, other_user, token):
+    response = client.put(
+        f'/users/{other_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': 'bob',
+            'email': 'bob@email.com',
+            'password': 'password',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}
+
+
 def test_update_integrity_error(client, user, token):
     # Create new user
     client.post(
@@ -104,6 +119,15 @@ def test_delete_user(client, user, token):
     assert response.json() == {
         'message': f'User {user.username} deleted successfully'
     }
+
+
+def test_delete_user_with_wrong_id(client, other_user, token):
+    response = client.delete(
+        f'/users/{other_user.id}', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}
 
 
 # TEST CASE: USER NOT FOUND !
