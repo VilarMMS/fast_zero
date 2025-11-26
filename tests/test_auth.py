@@ -149,11 +149,8 @@ def test_token_expired_dont_refresh(client, user):
 
     with freeze_time(lapsed_time):
         response = client.post(
-            '/auth/refresh_token',
-            headers={'Authorization': f'Bearer {token}'}
+            '/auth/refresh_token', headers={'Authorization': f'Bearer {token}'}
         )
 
         assert response.status_code == HTTPStatus.UNAUTHORIZED
-        assert response.json() == {
-            'detail': 'Could not validate credentials'
-        }
+        assert response.json() == {'detail': 'Could not validate credentials'}

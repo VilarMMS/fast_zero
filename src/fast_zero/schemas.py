@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from fast_zero.db_models import TodoState
+
 
 class Message(BaseModel):
     message: str
@@ -30,3 +32,29 @@ class Token(BaseModel):
 class FilterUsers(BaseModel):
     limit: int = Field(ge=1, default=10)
     offset: int = Field(ge=0, default=0)
+
+
+class FilterToDo(FilterUsers):
+    title: str | None = Field(default=None, min_length=3)
+    description: str | None = None
+    state: TodoState | None = None
+
+
+class ToDoUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    state: TodoState | None = None
+
+
+class TodoSchema(BaseModel):
+    title: str
+    description: str | None = None
+    state: TodoState = Field(default=TodoState.todo)
+
+
+class TodoPublic(TodoSchema):
+    id: int
+
+
+class TodosList(BaseModel):
+    todos: list[TodoPublic]
