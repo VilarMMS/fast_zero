@@ -149,33 +149,69 @@ async def test_list_todos_should_return_5_todos_filtered_description(
 async def test_list_todos_should_return_5_todos_filtered_state(
     session, client, user, token):
 
-    # arrange
-    excepted_todos = 5
-    state_todo = "draft"
-    endpoint = F'/todos/?state={state_todo}'
+    # Arrange
+    expected_todos = 5
+    state_to_filter = "draft"
+    endpoint = f'/todos?state={state_to_filter}'
 
-    # Adding todos with the same title to test filtering
     session.add_all(
-        ToDoFactory.create_batch(excepted_todos,
-                                 user_id=user.id,
-                                 state=TodoState.draft)
+        ToDoFactory.create_batch(
+            expected_todos,
+            user_id=user.id,
+            state=TodoState.draft
+        )
     )
 
-    # Adding todos with different title
+    # Create 5 'noise' items with a DIFFERENT and SPECIFIC state.
+    # This guarantees they will not be matched by the filter.
     session.add_all(
-        ToDoFactory.create_batch(excepted_todos,
-                                    user_id=user.id)
+        ToDoFactory.create_batch(
+            5,
+            user_id=user.id,
+            state=TodoState.done  # Use any state OTHER than 'draft'
+        )
     )
 
     await session.commit()
 
-    # act
+    # Act
     response = client.get(
         endpoint,
         headers={'Authorization': f'Bearer {token}'}
     )
 
-    assert len(response.json()['todos']) == excepted_todos
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()['todos']) == expected_todos
+
+
+@pytest.mark.asyncio
+async def test_create_todo_returns_correct_data(client, user, token):
+    # Arrange: Define the data we are going to send to the API.
+    new_todo_data = {
+        'title': 'My Test Title',
+        'description': 'A description for the test.',
+        'state': 'draft'
+    }
+
+    # Act: Call the correct endpoint with the correct payload.
+    response = client.post(
+        '/todos/',
+        json=new_todo_data,
+        headers={'Authorization': f'Bearer {token}'}
+    )
+
+    # Assert
+    assert response.status_code == HTTPStatus.OK
+
+    # Get the JSON body from the response
+    response_data = response.json()
+
+    # Now, check the contents of the response
+    assert response_data['title'] == new_todo_data['title']
+    assert response_data['description'] == new_todo_data['description']
+    assert response_data['state'] == new_todo_data['state']
+    assert 'id' in response_data
 
 
 @pytest.mark.asyncio
@@ -226,9 +262,9 @@ async def test_delete_other_user_todo(client,
 
 
 @pytest.mark.asyncio
-async def test_delete_patch_error(client, token):
+async def test_patch_error(client, token):
 
-    response = client.delete(
+    response = client.patch(
         '/todos/1111111',
         json={},
         headers={'Authorization': f'Bearer {token}'}
@@ -263,3 +299,4 @@ async def test_patch_todo(client, session, user, token):
     assert response.json()['title'] == todo_title
     assert response.json()['description'] == todo_description
     assert response.json()['state'] == todo_state
+
